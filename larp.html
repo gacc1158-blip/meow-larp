@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>meow-larp : algorithmique en français</title>
+<style>
+:root{color-scheme:dark;--bg:#0f1115;--card:#171a21;--fg:#e6e8ee;--mut:#9aa3b2;--bd:#262b36;--ac:#818cf8;--on:#0f1115;--ed:#12151b;--sel:#27304f;--err:#f87171;--kw:#a5b4fc;--str:#fbbf24;--cm:#9aa3b2;--resizer-bg:#3a3a40;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;}
+
+/* FLEX LAYOUT FOR RESIZING */
+#app{display:flex;flex-direction:column;height:100%;min-height:520px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;position:relative;background-size:cover;background-position:center;background-repeat:no-repeat;transition:background-color 0.3s;}
+.menu{flex:none;background:var(--card);backdrop-filter:blur(4px);}
+.tb{flex:none;background:var(--card);backdrop-filter:blur(4px);}
+.mid{flex:1;min-height:0}
+.resizer{flex:none;height:6px;background:var(--resizer-bg, var(--bd));cursor:row-resize;z-index:10;transition:background 0.2s;}
+.resizer:hover,.resizer.active{background:var(--ac)}
+.bot{flex:none;height:250px;background:var(--card);display:flex;flex-direction:column;min-height:0;overflow:hidden;backdrop-filter:blur(4px);}
+.st{flex:none;background:var(--card);backdrop-filter:blur(4px);}
+
+.tb{display:flex;gap:6px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.tb b{margin-right:10px;display:flex;align-items:center;font-size:15px}
+
+/* FIXED LOGO SIZE (Preserve aspect ratio) */
+.tb b img{margin-right:10px;border:1px solid var(--bd);background:#000;border-radius:6px;max-height:32px;width:auto;object-fit:contain;}
+
+button,input{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:4px 10px}
+button{cursor:pointer}button.p{background:var(--ac);color:var(--on);border-color:var(--ac);font-weight:600}
+button:active{border-color:var(--ac)}
+input{background:var(--bg)}
+input:disabled { opacity: 0.5; cursor: not-allowed; }
+.mid{display:grid;grid-template-columns:210px 1fr;}@media(max-width:700px){.mid{grid-template-columns:1fr;grid-template-rows:150px 1fr}}
+.side{border-right:1px solid var(--bd);overflow:auto;background:var(--card);min-height:0;backdrop-filter:blur(4px);}
+.side h3{margin:0;padding:4px 8px;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);background:rgba(0,0,0,0.2);border-bottom:1px solid var(--bd);text-align:left}
+.side .it{display:block;width:100%;text-align:left;border:0;border-radius:0;padding:3px 10px;background:none;font-size:13px;color:var(--fg)}
+.side .it.on{background:var(--sel);color:var(--fg)}
+.side .mod{font-family:ui-monospace,Consolas,monospace}
+#add{display:flex;gap:4px;padding:4px 8px}#add input{min-width:0;flex:1;padding:2px 6px}
+.ed{display:flex;min-height:0;background:transparent;position:relative;}
+#gut,#src{font:14px/20px ui-monospace,Consolas,monospace;padding:8px 6px;margin:0;box-sizing:border-box}
+#gut{width:42px;text-align:right;color:var(--mut);overflow:hidden;white-space:pre;border-right:1px solid var(--bd);user-select:none;background:var(--bg);opacity:0.85;}
+#src{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--fg);white-space:pre;overflow:auto;tab-size:2;z-index:2}
+#out{flex:1;margin:0;padding:6px 10px;overflow:auto;white-space:pre-wrap;font:13px/1.45 ui-monospace,Consolas,monospace;background:var(--card);color:var(--fg)}
+#inrow{display:none !important}
+#err{color:var(--err);padding:0 10px 4px;white-space:pre-wrap}
+.st{display:flex;gap:16px;padding:2px 10px;font-size:12px;color:var(--mut);border-top:1px solid var(--bd)}
+.st span{border:0}
+.bh{background:rgba(0,0,0,0.2);color:var(--mut);text-align:left;text-transform:uppercase;font-size:.7rem;letter-spacing:.06em;padding:0 6px;flex:none}
+
+#msg{flex:none;height:110px;margin:0;padding:2px 8px;overflow:auto;font:12px/1.4 ui-monospace,Consolas,monospace;background:var(--card);color:var(--fg);white-space:pre-wrap}
+#vv{flex:none;height:42px;margin:0;padding:2px 8px;overflow:auto;font:12px/1.4 ui-monospace,Consolas,monospace;background:var(--card);color:var(--fg)}
+
+/* New horizontal resizers inside the bottom panel */
+.resizer-h {
+  height: 6px;
+  background: var(--resizer-bg, var(--bd));
+  cursor: row-resize;
+  flex: none;
+  z-index: 5;
+  transition: background 0.2s;
+}
+.resizer-h:hover, .resizer-h.active {
+  background: var(--ac);
+}
+
+.cw{position:relative;flex:1;min-width:0}
+#hl,#src{position:absolute;inset:0;width:100%;height:100%}
+#hl{margin:0;padding:8px 6px;box-sizing:border-box;overflow:hidden;pointer-events:none;font:14px/20px ui-monospace,Consolas,monospace;white-space:pre;color:var(--fg)}
+#hl i,#hl b,#hl u{font-style:normal;font-weight:400;text-decoration:none}
+#hl .k{color:var(--kw)}#hl .s{color:var(--str)}#hl .c{color:var(--cm)}#hl .cl{background:rgba(129,140,248,.35)}
+#src{background:transparent;color:transparent;caret-color:var(--fg)}
+.bgl{display:flex;align-items:center;gap:4px}input[type=color]{padding:0;width:34px;height:28px;cursor:pointer;border-radius:4px}
+#hl .gh{color:var(--mut);opacity:.6}#hl u.er{text-decoration:underline wavy var(--err);text-underline-offset:3px}
+#msg.has-errors{color:#ff6b6b !important;background:#2a1518 !important;font-weight:800 !important;line-height:1.55 !important;padding:6px 10px !important}
+#err{font-weight:700}
+#fc{position:absolute;inset:0;overflow:auto;background:var(--card);z-index:2;padding:8px}#fc[hidden]{display:none}
+#fc path{fill:none;stroke:var(--fg)}#fc polygon,#fc rect{fill:var(--card);stroke:var(--fg)}#fc text{fill:var(--fg);font:12px system-ui,sans-serif;text-anchor:middle}
+#msg .error-line{display:inline-block;color:#1a1a1a !important;background:linear-gradient(135deg, #ffd166 0%, #d97706 100%) !important;border:1px solid #fef08a !important;border-radius:5px;padding:0 8px;margin:0 4px;font-weight:900;letter-spacing:.04em;box-shadow:0 2px 5px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.6);text-shadow:none !important;vertical-align:baseline}
+
+/* Custom styling for Variables and Types */
+.var-prefix { color: #ff4444 !important; font-weight: bold !important; }
+.var-type { color: #ff4444 !important; font-weight: bold !important; }
+
+/* Menu Bar & Dropdowns (Modern Dark Style) */
+.menu{display:flex;padding:1px 4px;border-bottom:1px solid var(--bd);position:relative;z-index:100;user-select:none}
+.menu-item{position:relative;padding:4px 10px;cursor:default;font-size:13px;border-radius:4px}
+.menu-item:hover,.menu-item.open{background:var(--sel);color:var(--fg)}
+.dropdown{display:none;position:absolute;top:100%;left:0;min-width:220px;background:var(--card);border:1px solid var(--bd);border-radius:6px;flex-direction:column;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.4);z-index:101;backdrop-filter:blur(10px);}
+.menu-item.open .dropdown{display:flex}
+.dropdown span{padding:6px 24px;cursor:pointer;display:flex;justify-content:space-between;font-size:13px;color:var(--fg);position:relative;border-radius:4px;margin:0 4px}
+.dropdown span:hover{background:var(--ac);color:var(--on)}
+.dropdown span:hover .shortcut{color:var(--on)}
+.dropdown hr{margin:4px 8px;border:0;border-top:1px solid var(--bd)}
+.shortcut{color:var(--mut);font-size:12px;margin-left:20px;font-family:inherit}
+.arrow{position:absolute;right:8px;font-size:10px;top:50%;transform:translateY(-50%)}
+.submenu{display:none;position:absolute;left:100%;top:-3px;min-width:180px;background:var(--card);border:1px solid var(--bd);border-radius:6px;flex-direction:column;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,0.4);backdrop-filter:blur(10px);}
+.dropdown span:hover > .submenu{display:flex}
+
+/* Console Modal (Modern Dark Style) */
+#console-modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 650px; height: 450px;
+  min-width: 300px; min-height: 200px;
+  background: #0d1117; color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+  display: flex; flex-direction: column; z-index: 1000;
+  font-family: "Consolas", "Courier New", monospace;
+  overflow: hidden;
+}
+#console-modal[hidden] { display: none; }
+.console-titlebar {
+  background: #161b22; color: #c9d1d9; padding: 8px 12px; display: flex;
+  justify-content: space-between; align-items: center;
+  font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600;
+  border-bottom: 1px solid #30363d;
+  cursor: grab;
+  user-select: none;
+}
+.console-titlebar:active { cursor: grabbing; }
+.console-controls button { background: transparent; border: none; color: #8b949e; cursor: pointer; padding: 0 4px; font-size: 16px; font-weight: bold; border-radius: 4px; }
+.console-controls button:hover { background: #30363d; color: #c9d1d9; }
+.console-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; }
+#console-out { margin: 0; white-space: pre-wrap; font-size: 14px; color: #e6edf3; line-height: 1.5; }
+#console-prompt { display: flex; margin-top: 4px; }
+#console-prompt[hidden] { display: none; }
+#console-prompt-label { display: none; }
+#console-inp { flex: 1; background: transparent; color: #7ee787; border: none; outline: none; font-family: inherit; font-size: 14px; padding: 0; margin: 0; border-radius: 0; }
+#console-footer { display: none; padding: 10px; text-align: center; color: #8b949e; font-weight: bold; cursor: pointer; border-top: 1px solid #30363d; background: #161b22; }
+
+/* Console Resize Handle */
+.console-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, #8b949e 50%);
+  z-index: 1001;
+}
+</style></head><body>
+<div id="app">
+ <div class="menu">
+   <div class="menu-item" id="menu-fichier">Fichier
+     <div class="dropdown">
+       <span data-a="new">Nouveau... <span class="shortcut">Ctrl+N</span></span>
+       <span data-a="open">Ouvrir... <span class="shortcut">Ctrl+O</span></span>
+       <span data-a="reopen">Rouvrir <span class="arrow">▶</span>
+         <div class="submenu">
+           <span data-a="reopen1">Projet 1.larp</span>
+           <span data-a="reopen2">Projet 2.larp</span>
+         </div>
+       </span>
+       <hr>
+       <span data-a="close">Fermer projet</span>
+       <hr>
+       <span data-a="dl">Sauvegarder <span class="shortcut">Ctrl+S</span></span>
+       <span data-a="saveas">Sauvegarder sous...</span>
+       <hr>
+       <span data-a="print">Imprimer... <span class="shortcut">Ctrl+P</span></span>
+       <hr>
+       <span data-a="quit">Quitter <span class="shortcut">Alt+F4</span></span>
+     </div>
+   </div>
+   <div class="menu-item" id="menu-editer">Éditer
+     <div class="dropdown">
+       <span data-cmd="undo">Annuler <span class="shortcut">Ctrl+Z</span></span>
+       <span data-cmd="redo">Rétablir <span class="shortcut">Ctrl+Y</span></span>
+       <hr>
+       <span data-cmd="cut">Couper <span class="shortcut">Ctrl+X</span></span>
+       <span data-cmd="copy">Copier <span class="shortcut">Ctrl+C</span></span>
+       <span data-cmd="paste">Coller <span class="shortcut">Ctrl+V</span></span>
+       <span data-cmd="delete">Effacer <span class="shortcut">Del</span></span>
+       <hr>
+       <span data-cmd="clearall">Effacer tout <span class="shortcut">Ctrl+Del</span></span>
+       <span data-cmd="selectall">Sélectionner tout <span class="shortcut">Ctrl+A</span></span>
+       <hr>
+       <span data-cmd="contents">Contenu...</span>
+       <hr>
+       <span data-cmd="indent">Augmenter l'indentation</span>
+       <span data-cmd="unindent">Réduire l'indentation</span>
+       <hr>
+       <span data-cmd="find">Rechercher... <span class="shortcut">Ctrl+F</span></span>
+       <span data-cmd="findnext">Rechercher suivant <span class="shortcut">F3</span></span>
+       <span data-cmd="replace">Remplacer... <span class="shortcut">Ctrl+H</span></span>
+     </div>
+   </div>
+   <div class="menu-item" id="menu-afficher">Afficher
+     <div class="dropdown">
+       <span data-cmd="document">Document</span>
+       <span data-cmd="sidepanel">Panneau latéral</span>
+       <span data-cmd="messages">Messages</span>
+       <span data-cmd="console">Console <span class="shortcut">F5</span></span>
+       <hr>
+       <span data-cmd="zoomin">Agrandir l'affichage</span>
+       <span data-cmd="zoomout">Réduire l'affichage</span>
+       <span data-cmd="zoomreset">Aucun agrandissement</span>
+       <hr>
+       <span data-a="fb">Pseudo-code...</span>
+     </div>
+   </div>
+   <div class="menu-item" id="menu-executer">Exécuter
+     <div class="dropdown">
+       <span data-cmd="compile">Compiler... <span class="shortcut">Ctrl+F7</span></span>
+       <span data-a="go">Exécuter... <span class="shortcut">F7</span></span>
+       <span data-a="sb">Exécuter pas-à-pas... <span class="shortcut">Shift+F7</span></span>
+       <span data-a="stop">Interrompre l'exécution...</span>
+       <hr>
+       <span data-a="nx">Exécuter un pas <span class="shortcut">F6</span></span>
+       <span data-cmd="animate">Exécution animée <span class="shortcut">Ctrl+F6</span></span>
+       <span data-cmd="step">Marcher</span>
+       <span data-cmd="continue">Continuer l'exécution</span>
+       <span data-cmd="suspend">Suspendre l'exécution <span class="shortcut">Shift+F6</span></span>
+       <hr>
+       <span data-cmd="breakpoint">Point d'arrêt <span class="shortcut">F8</span></span>
+     </div>
+   </div>
+   <div class="menu-item" id="menu-projet">Projet
+     <div class="dropdown">
+       <span data-cmd="newproj">Nouveau <span class="arrow">▶</span>
+         <div class="submenu">
+           <span data-cmd="newpseudo">Pseudo-code</span>
+           <span data-cmd="newflow">Organigramme</span>
+         </div>
+       </span>
+       <span data-cmd="closeproj">Fermer</span>
+       <hr>
+       <span data-cmd="modules">Modules <span class="arrow">▶</span>
+         <div class="submenu">
+           <span data-cmd="addmod">Nouveau module</span>
+           <span data-cmd="delmod">Supprimer module</span>
+         </div>
+       </span>
+       <span data-cmd="buffers">Tampons d'E/S <span class="arrow">▶</span>
+         <div class="submenu">
+           <span data-cmd="newbuffer">Nouveau tampon</span>
+         </div>
+       </span>
+     </div>
+   </div>
+   <div class="menu-item" id="menu-options">Options
+     <div class="dropdown">
+       <span data-cmd="general">Générales...</span>
+       <span data-cmd="colors">Couleurs...</span>
+     </div>
+   </div>
+   <div class="menu-item" id="menu-aide">Aide
+     <div class="dropdown">
+       <span data-cmd="help">Aide contextuelle... <span class="shortcut">F1</span></span>
+       <span data-cmd="helpcontents">Contenu... <span class="shortcut">Shift+F1</span></span>
+       <span data-cmd="helperr">Erreur... <span class="shortcut">Ctrl+F1</span></span>
+       <hr>
+       <span data-cmd="bug">Rapporter un bogue...</span>
+       <span data-cmd="about">À propos...</span>
+     </div>
+   </div>
+ </div>
+ <div class="tb">
+   <b>
+     <img src="cat.jpg">
+     meow-larp
+   </b>
+   <button class="p" id="go">▶ Exécuter</button>
+   <button id="stop">■ Arrêter</button>
+   <button id="undo-btn" title="Annuler (Ctrl+Z)">↶ Annuler</button>
+   <button id="redo-btn" title="Rétablir (Ctrl+Y)">↷ Rétablir</button>
+   <button id="dl">Enregistrer</button>
+   <button id="sb">⏭ Pas à pas</button>
+   <button id="nx">Suivant</button>
+   <button id="fb">Organigramme</button>
+   <button id="hotkey-btn" title="Définir le raccourci d'exécution">⌨ F5</button>
+   <label class="bgl" title="Couleur de fond de l’éditeur">Fond <input type="color" id="bgc" value="#12151b"></label>
+   <button id="img-btn" title="Changer l'image de fond">🖼️ Image</button>
+   <input type="file" id="bg-file" accept="image/*" hidden>
+   <button id="bgr" title="Couleur et image par défaut">↺</button>
+ </div>
+ <div class="mid">
+  <div class="side"><h3>Navigateur</h3><div id="nav"></div>
+   <div id="add"><input id="nn" placeholder="Nouveau module" aria-label="Nom du module"><button id="na">+</button></div>
+   <h3>Modèles</h3><div id="mdl"></div></div>
+  <div class="ed"><pre id="gut"></pre><div class="cw"><pre id="hl"></pre><textarea id="src" spellcheck="false" wrap="off" aria-label="Éditeur"></textarea><div id="fc" hidden></div></div></div>
+ </div>
+ 
+ <!-- Outer Resizer for the whole bottom panel -->
+ <div class="resizer" id="drag-resizer"></div>
+
+ <div class="bot">
+   <div class="bh">Messages</div><pre id="msg"></pre>
+   <!-- Inner Resizer for Messages -->
+   <div class="resizer-h" data-target="msg"></div>
+   
+   <div class="bh">Variables (pas à pas)</div><pre id="vv"></pre>
+   <!-- Inner Resizer for Variables -->
+   <div class="resizer-h" data-target="vv"></div>
+   
+   <div class="bh">Exécution</div><pre id="out"></pre>
+   <div id="inrow" hidden><label id="inlab" for="inp"></label><input id="inp" autocomplete="off"><button id="ok" class="p">OK</button></div>
+   <div id="err"></div>
+ </div>
+ <div class="st"><span id="pos">1:1</span><span id="cur">PRINCIPAL</span><span>Ins</span><span>SU</span></div>
+</div>
+
+<!-- Console Modal -->
+<div id="console-modal" hidden>
+  <div class="console-titlebar">
+    <div class="console-title">Console</div>
+    <div class="console-controls"><button id="console-close">✕</button></div>
+  </div>
+  <div class="console-body" id="console-body">
+    <pre id="console-out"></pre>
+    <div id="console-prompt" hidden>
+      <span id="console-prompt-label"></span>
+      <input type="text" id="console-inp" autocomplete="off">
+    </div>
+  </div>
+  <div id="console-footer">Appuyez sur une touche pour fermer la console...</div>
+  <!-- Resize Handle -->
+  <div class="console-resize-handle"></div>
+</div>
+
+<script>
+//<core
+const AF=Object.getPrototypeOf(async function(){}).constructor;
+const nrm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+const F={
+  ABS:Math.abs, RACINE:Math.sqrt, ARRONDIR:Math.round, PLANCHER:Math.floor, PLAFOND:Math.ceil, ENTIER:Math.floor,
+  MAX:Math.max, MIN:Math.min, SIN:Math.sin, COS:Math.cos, TAN:Math.tan, LOG:Math.log, EXP:Math.exp,
+  ALEA:(min, max) => min !== undefined && max !== undefined ? Math.floor(Math.random() * (max - min + 1)) + min : Math.random(),
+  ALEATOIRE:(min, max) => min !== undefined && max !== undefined ? Math.floor(Math.random() * (max - min + 1)) + min : Math.random(),
+  
+  LONGUEUR:s=>String(s).length,
+  MAJUSCULES:s=>String(s).toUpperCase(),
+  MINUSCULES:s=>String(s).toLowerCase(),
+  SOUSCHAINE:(s,d,f)=>String(s).substring(Number(d)-1, Number(f)),
+  SOUS_CHAINE:(s,d,f)=>String(s).substring(Number(d)-1, Number(f)),
+  SOUSENSEMBLE:(s,d,f)=>String(s).substring(Number(d)-1, Number(f)),
+  SOUS_ENSEMBLE:(s,d,f)=>String(s).substring(Number(d)-1, Number(f)),
+  EXTRAIRE:(s,d,f)=>String(s).substring(Number(d)-1, Number(f)),
+  POSITION:(s,sub)=>String(s).indexOf(String(sub))+1,
+  CONCATENER:(...a)=>a.join(''),
+  GAUCHE:(s,n)=>String(s).substring(0, Number(n)),
+  DROITE:(s,n)=>String(s).slice(-Number(n)),
+  REPETER:(s,n)=>String(s).repeat(Number(n)),
+  REMPLACER:(s,old,newStr)=>String(s).split(String(old)).join(String(newStr)),
+  CONVERTIR:s=>Number(s),
+  VALEUR:s=>Number(s),
+  CHAINE:s=>String(s),
+  CARACTERE:s=>String(s),
+  ASC:s=>String(s).charCodeAt(0),
+  CHR:s=>String.fromCharCode(Number(s))
+};
+
+const OP={ET:'&&',OU:'||',NON:'!',MOD:'%',VRAI:'true',FAUX:'false'};
+const RE=/"[^"]*"|\d+(?:\.\d+)?|([\p{L}_][\p{L}\p{N}_]*)\s*\[([^\]]+)\]|[\p{L}_][\p{L}\p{N}_]*|<>|(?<![<>!=])=(?!=)/gu;
+
+function compMod(name,src,ctx=null){
+ const out=[],vars=ctx?ctx.vars:new Set(),tmp=[],params=ctx?ctx.params:[],arrays=new Set();
+ let seenDebut = false;
+
+ const ex=s=>s.replace(RE,(m,arr,idx,off)=>{
+  if(m[0]==='"') return m;
+  if(/^\d+(?:\.\d+)?$/.test(m)) return m; // Ignore numbers so they aren't treated as variables
+  
+  if (arr && idx) {
+      let newIdx = ex(idx);
+      return 'v_' + nrm(arr).toLowerCase() + '[Math.floor(' + newIdx + ')]';
+  }
+  
+  if(m=='<>')return'!=';if(m=='=')return'==';
+  const u=nrm(m).toUpperCase(),call=s.slice(off+m.length).trimStart()[0]=='(';
+  if(OP[u])return OP[u];if(u=='PI'&&!call)return'Math.PI';
+  if(call)return F[u]?'F.'+u:'await C.'+nrm(m).toLowerCase();
+  
+  const varName = nrm(m).toLowerCase();
+  if(!vars.has(varName) && !params.includes(varName)){
+      throw new Error("Variable non déclarée : « "+m+" »");
+  }
+  return 'v_' + varName;
+ });
+ 
+ src.split('\n').forEach((raw,n)=>{
+  const b=out.length,line=raw.replace(/\\\\.*$/,'').trim().normalize('NFC');if(!line)return;
+  const nr=nrm(line).toUpperCase();
+  
+  // Multi-line variables parsing
+  if (!seenDebut) {
+      if (nr === 'DEBUT') {
+          seenDebut = true;
+          return;
+      }
+      const cleanLine = line.replace(/^VARIABLES\s*:?\s*/i, '');
+      const arrayMatches = cleanLine.matchAll(/([\p{L}_][\p{L}\p{N}_]*)\s*(?::\s*TABLEAU|\[)/giu);
+      for (const arr of arrayMatches) arrays.add(nrm(arr[1]).toLowerCase());
+      const varTokens = cleanLine.match(/[\p{L}_][\p{L}\p{N}_]*/gu) || [];
+      varTokens.forEach(v => vars.add(nrm(v).toLowerCase()));
+      return;
+  }
+
+  const g=(m,i)=>m.indices[i]?line.slice(m.indices[i][0],m.indices[i][1]).trim():undefined;
+  const bad=()=>{throw new Error(name+", ligne "+(n+1)+" : instruction non comprise « "+raw.trim()+" »")};
+  const idn=v=>{if(!/^[\p{L}_][\p{L}\p{N}_]*$/u.test(v))bad();return v};
+  let m;
+
+  if(/^(DEBUT|FIN)$/i.test(nr))return;
+  
+  // Array assignment (e.g., tab[i] = 5)
+  if (m=/^([\p{L}_][\p{L}\p{N}_]*)\s*\[(.*?)\]\s*=\s*(.+)$/idu.exec(nr)) {
+      const arrName = nrm(m[1]).toLowerCase();
+      vars.add(arrName);
+      arrays.add(arrName);
+      const idx = ex(m[2]);
+      const val = ex(m[3]);
+      out.push('v_' + arrName + '[Math.floor(' + idx + ')] = ' + val + ';');
+  }
+  else if(m=/^ENTRER\s+(.+)$/id.exec(nr)){
+      const p=g(m,1).split(',').map(x=>nrm(idn(x.trim())).toLowerCase());
+      p.forEach(x=>{vars.add(x); params.push(x);});
+  }
+  else if(m=/^ECRIRE\s+(.+)$/id.exec(nr))out.push('ecrire('+ex(g(m,1))+');');
+  else if(m=/^LIRE\s+(.+)$/id.exec(nr))g(m,1).split(',').forEach(x=>{const v=nrm(idn(x.trim())).toLowerCase();vars.add(v);out.push('v_'+v+'=await lire('+JSON.stringify(x.trim())+');')});
+  else if(m=/^RETOURNER\s+(.+)$/id.exec(nr))out.push('return '+ex(g(m,1))+';');
+  else if(m=/^EXECUTER\s+(.+)$/id.exec(nr))out.push(ex(g(m,1))+';');
+  else if(m=/^SINON\s+SI\s+(.+?)\s+ALORS$/id.exec(nr))out.push('}else if('+ex(g(m,1))+'){');
+  else if(/^SINON$/i.test(nr))out.push('}else{');
+  else if(m=/^SI\s+(.+?)\s+ALORS$/id.exec(nr))out.push('if('+ex(g(m,1))+'){');
+  else if(/^FIN(SI|POUR|TANTQUE)$/i.test(nr))out.push('}');
+  else if(m=/^TANTQUE\s+(.+?)\s+FAIRE$/id.exec(nr))out.push('while(tick(),'+ex(g(m,1))+'){');
+  else if(m=/^POUR\s+(\S+)\s+(?:DE|=)\s*(.+?)\s+(?:JUSQU['’]?A|A)\s+(.+?)(?:\s+INCREMENT\s+(.+?))?\s+FAIRE$/id.exec(nr)){
+   const vName=nrm(idn(g(m,1))).toLowerCase();
+   const v='v_'+vName,e='_e'+tmp.length,s='_s'+tmp.length;
+   vars.add(vName);
+   tmp.push(e,s);
+   out.push('for('+v+'='+ex(g(m,2))+','+e+'='+ex(g(m,3))+','+s+'='+ex(g(m,4)||'1')+';'+s+'>0?'+v+'<='+e+':'+v+'>='+e+';'+v+'+='+s+'){tick();')}
+  else if(/^REPETER$/i.test(nr))out.push('do{tick();');
+  else if(m=/^JUSQU['’]?A\s+(.+)$/id.exec(nr))out.push('}while(!('+ex(g(m,1))+'));');
+  else if(m=/^([\p{L}_][\p{L}\p{N}_]*)\s*=\s*(.+)$/idu.exec(nr)){
+      const v=nrm(g(m,1)).toLowerCase();
+      const expr=ex(g(m,2));
+      vars.add(v);
+      out.push('v_'+v+'='+expr+';');
+  }
+  else bad();
+  if(out.length>b&&!/^}/.test(out[b]))out.splice(b,0,'await stp('+(n+1)+',"'+name+'",()=>({/*V*/}));');
+ });
+ const loc=[...[...vars].filter(x=>!params.includes(x)).map(x=>'v_'+x),...tmp];
+ let initCode = '';
+ arrays.forEach(arr => {
+     if (!params.includes(arr)) {
+         initCode += 'v_' + arr + ' = [];\n';
+     }
+ });
+ return 'C.'+nrm(name).toLowerCase()+'=async function('+params.map(p=>'v_'+p)+'){tick();'+(loc.length?'let '+loc+';':'')+'\n'+initCode+out.join('\n').replace(/\/\*V\*\//g,[...vars].map(x=>x+':v_'+x))+'\n};\n';
+}
+function compileAll(mods){let c='';for(const k in mods)c+=compMod(k,mods[k]);return c+'await C.principal();'}
+//core>
+let curL=0,curM='',stepping=false,want=false,nextStep=null,running=false,runP=null;
+const KW=new Set("ALORS CHAINE DE DEBUT ECRIRE ECRITURE EN ENTIER ENTRER ET EXECUTER FAIRE FERMER FICHIER FIN FINPOUR FINSELECTIONNER FINSI FINTANTQUE INCREMENT JUSQU'A JUSQU’A LECTURE LIRE MOD NON OU OUVRIR POUR REPETER REQUETE RETOURNER SELECTIONNER SEPARATEUR SI SINON SUR TAMPON TANTQUE VRAI FAUX TABLEAU REEL BOOLEEN CARACTERE ENTIERS REELS".split(' '));
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function withGhosts(t){const ls=t.split('\n');[...DG].filter(d=>d.ins!==undefined).sort((x,y)=>y.col-x.col).forEach(d=>{const g=(d.gl||d.l)-1;if(ls[g]===undefined)return;const c=Math.min(d.col,ls[g].length);ls[g]=ls[g].slice(0,c)+'\uE000'+d.ins+'\uE001'+ls[g].slice(c)});return ls.join('\n')}
+
+function hl(){
+ const errL=new Set(DG.map(d=>d.l));
+ const h=esc(withGhosts(src.value)).replace(/(\\\\[^\uE000]*)|(\uE000[^\uE001]*\uE001)|("[^"\n\uE000]*"?)|([\p{L}_][\p{L}\p{N}_’']*)/gu,(m,c,g,s,w)=>{
+     if(c) return '<i class="c">'+c+'</i>';
+     if(g) return '<i class="gh">'+g.slice(1,-1).replace(/\n/g,'<br>')+'</i>';
+     if(s) return '<i class="s">'+s+'</i>';
+     if(w) {
+         const u = nrm(w).toUpperCase();
+         if(u === 'DEBUT' || u === 'FIN' || KW.has(u)) {
+             return '<b class="k">'+w+'</b>';
+         }
+     }
+     return w;
+ });
+ const ls=h.split('\n');
+ 
+ const rawLines = src.value.split('\n');
+ const debutIndex = rawLines.findIndex(l => l.trim().toUpperCase() === 'DEBUT');
+
+ ls.forEach((x,i)=>{
+     if (debutIndex === -1 || i < debutIndex) {
+         // We are in the variables block
+         if (i === 0) {
+             let match = rawLines[i].match(/^(VARIABLES\s*:?\s*)(.*)$/i);
+             if (match) {
+                 let prefix = match[1];
+                 let rest = match[2];
+                 rest = esc(rest).replace(/\b(ENTIER|REEL|CHAINE|BOOLEEN|CARACTERE|ENTIERS|REELS|TABLEAU)\b/gi, '<span class="var-type">$1</span>');
+                 ls[i] = '<span class="var-prefix">' + prefix + '</span>' + rest;
+             } else {
+                 ls[i] = '<span class="var-prefix">VARIABLES : </span>' + esc(rawLines[i]);
+             }
+         } else {
+             ls[i] = esc(rawLines[i]).replace(/\b(ENTIER|REEL|CHAINE|BOOLEEN|CARACTERE|ENTIERS|REELS|TABLEAU)\b/gi, '<span class="var-type">$1</span>');
+         }
+     } else if(errL.has(i+1)) {
+         ls[i] = '<u class="er">'+x+'</u>';
+     }
+ });
+
+ if(curL&&curM==cur&&ls[curL-1]!==undefined)ls[curL-1]='<u class="cl">'+ls[curL-1]+'</u>';
+ $('hl').innerHTML=ls.join('\n')+'\n'
+}
+
+function stp(l,m,g){if(halt)throw new Error('Exécution arrêtée');if(!stepping)return;curL=l;curM=m;let v={};try{v=g()}catch(e){}
+ $('vv').textContent=m+' · ligne '+l+'\n'+Object.entries(v).map(([k,x])=>k+' = '+(x===undefined?'?':x)).join('   ');hl();return new Promise(r=>nextStep=r)}
+function tree(s){const root=[],st=[{l:root}],T=()=>st[st.length-1];
+ s.split('\n').forEach(raw=>{const t=raw.replace(/\\\\.*$/,'').trim();if(!t)return;const u=nrm(t).toUpperCase(),add=n=>{T().l.push(n);return n};let m;
+  if(/^(DEBUT|FIN|VARIABLES\s*:)/.test(u))return;
+  if(/^SINON\s+SI\s+.+\s+ALORS$/.test(u)){const p=T();p.l=p.node.n;const n={t:'if',c:t.replace(/^SINON\s+SI\s+/i,'').replace(/\s+ALORS$/i,''),y:[],n:[]};p.l.push(n);st.push({l:n.y,node:n,chain:1})}
+  else if(u=='SINON'){const p=T();p.l=p.node.n}
+  else if(/^SI\s+.+\s+ALORS$/.test(u)){const n=add({t:'if',c:t.replace(/^SI\s+/i,'').replace(/\s+ALORS$/i,''),y:[],n:[]});st.push({l:n.y,node:n})}
+  else if(u=='FINSI'){let p;do{p=st.pop()}while(p&&p.chain)}
+  else if(/^(TANTQUE|POUR)\s/.test(u)){const n=add({t:'w',c:t.replace(/\s+FAIRE$/i,''),b:[]});st.push({l:n.b,node:n})}
+  else if(/^FIN(TANTQUE|POUR)$/.test(u))st.pop();
+  else if(u=='REPETER'){const n=add({t:'r',b:[]});st.push({l:n.b,node:n})}
+  else if(/^JUSQU['’]?A\s/.test(u)){const p=st.pop();p.node.c=t.replace(/^JUSQU\S*\s+/i,'')}
+  else add({t:/^(LIRE|ECRIRE|ENTRER)\b/.test(u)?'io':'p',c:t})});
+ return root}
+function flow(s){const L=[],G=22,root=tree(s);
+ const sh=x=>esc(x.length>24?x.slice(0,23)+'…':x);
+ const W=l=>Math.max(150,...l.map(n=>n.t=='if'?W(n.y)+W(n.n)+30:n.t=='p'||n.t=='io'?150:W(n.b)+80));
+ const P=(d,a)=>L.push('<path d="'+d+'"'+(a?' marker-end="url(#ar)"':'')+'/>');
+ const tx=(x,y,x2)=>L.push('<text x="'+x+'" y="'+(y+4)+'">'+sh(x2)+'</text>');
+ const dia=(x,y,c)=>{L.push('<polygon points="'+x+','+y+' '+(x+75)+','+(y+22)+' '+x+','+(y+44)+' '+(x-75)+','+(y+22)+'"/>');tx(x,y+18,c)};
+ const box=(x,y,c,io)=>{L.push(io?'<polygon points="'+(x-65)+','+y+' '+(x+80)+','+y+' '+(x+65)+','+(y+30)+' '+(x-80)+','+(y+30)+'"/>':'<rect x="'+(x-75)+'" y="'+y+'" width="150" height="30"/>');tx(x,y+15,c)};
+ const run=(l,x,y)=>{l.forEach(n=>{P('M'+x+' '+y+'L'+x+' '+(y+G),1);y+=G;
+  if(n.t=='p'||n.t=='io'){box(x,y,n.c,n.t=='io');y+=30}
+  else if(n.t=='if'){const y0=y,wy=W(n.y),wn=W(n.n),tot=wy+wn+30,xl=x-tot/2+wy/2,xr=x+tot/2-wn/2;dia(x,y,n.c);
+   P('M'+(x-75)+' '+(y0+22)+'L'+xl+' '+(y0+22));P('M'+(x+75)+' '+(y0+22)+'L'+xr+' '+(y0+22));tx(x-92,y0+14,'Oui');tx(x+92,y0+14,'Non');
+   const a=run(n.y,xl,y0+22),b=run(n.n,xr,y0+22),yj=Math.max(a,b)+G;P('M'+xl+' '+a+'L'+xl+' '+yj+'L'+x+' '+yj);P('M'+xr+' '+b+'L'+xr+' '+yj+'L'+x+' '+yj);y=yj}
+  else if(n.t=='w'){const y0=y,hw=W(n.b)/2+40;dia(x,y,n.c);tx(x+14,y0+58,'Oui');tx(x+92,y0+14,'Non');
+   const e=run(n.b,x,y0+44),yE=e+2*G;P('M'+x+' '+e+'L'+x+' '+(e+G)+'L'+(x-hw)+' '+(e+G)+'L'+(x-hw)+' '+(y0+22)+'L'+(x-75)+' '+(y0+22),1);
+   P('M'+(x+75)+' '+(y0+22)+'L'+(x+hw)+' '+(y0+22)+'L'+(x+hw)+' '+yE+'L'+x+' '+yE);y=yE}
+  else{const yt=y,hw=W(n.b)/2+40;y=run(n.b,x,y-G);P('M'+x+' '+y+'L'+x+' '+(y+G),1);y+=G;dia(x,y,n.c||'?');
+   P('M'+(x-75)+' '+(y+22)+'L'+(x-hw)+' '+(y+22)+'L'+(x-hw)+' '+(yt-G/2)+'L'+x+' '+(yt-G/2),1);tx(x-92,y+14,'Non');y+=44}});return y};
+ const w=W(root)+120,cx=w/2;box(cx,10,'DÉBUT');let y=run(root,cx,40);P('M'+cx+' '+y+'L'+cx+' '+(y+G),1);box(cx,y+G,'FIN');
+ return '<svg width="'+w+'" height="'+(y+G+50)+'" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" style="fill:var(--fg);stroke:none"/></marker></defs>'+L.join('')+'</svg>'}
+const CL={SI:'FINSI',W:'FINTANTQUE',P:'FINPOUR',R:'JUSQU’À condition'};
+const DISP={ECRIRE:'ÉCRIRE',LIRE:'LIRE',SI:'SI',SINON:'SINON',FINSI:'FINSI',TANTQUE:'TANTQUE',FINTANTQUE:'FINTANTQUE',POUR:'POUR',FINPOUR:'FINPOUR',REPETER:'RÉPÉTER',ENTRER:'ENTRER',RETOURNER:'RETOURNER',EXECUTER:'EXÉCUTER'};
+const FORMS={SI:'SI condition ALORS',TANTQUE:'TANTQUE condition FAIRE',POUR:'POUR i DE 1 JUSQU’À 10 FAIRE (ou POUR i = 1 JUSQU’À 10)',LIRE:'LIRE variable',ECRIRE:'ÉCRIRE valeur1, valeur2',ENTRER:'ENTRER param1, param2',RETOURNER:'RETOURNER valeur',EXECUTER:'EXÉCUTER Module(arguments)'};
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));return d[a.length][b.length]}
+
+function jsErr(f){
+  let s=f;
+  if(s.includes('do{tick();')){
+     s=s.replace('do{tick();','do{tick();}while(false);');
+  }else{
+     s=(f[0]=='}'?(/^}while/.test(f)?'do{':'if(1){'):'')+f;
+     const n=(s.match(/{/g)||[]).length-(s.match(/}/g)||[]).length;
+     s+='}'.repeat(Math.max(0,n));
+  }
+  try{new AF(s)}catch(e){return e}return null;
+}
+
+function jsMsg(e){const m=e.message;return /Unexpected (identifier|string|number)/.test(m)?'Deux valeurs se suivent sans opérateur ni virgule entre elles (il manque peut-être + ou une virgule).':/Unexpected token|end of input/.test(m)?'Une valeur est attendue ici (un opérateur sans valeur après lui, ou un symbole inattendu).':'Expression mal formée.'}
+function lintMod(name,src,known){
+ const D=[],st=[],lines=src.split('\n');let last=0;
+ const add=(l,type,msg,fix,col,ins,gl)=>D.push({mod:name,l,type,msg,fix,col,ins,gl});
+ const ctx = { vars: new Set(), params: [] };
+ let seenDebut = false;
+
+ lines.forEach((raw,i)=>{
+  const L=i+1,code=raw.replace(/\\\\.*$/,''),t=code.trim();if(!t)return;last=L;
+  const end=code.replace(/\s+$/,'').length,u=nrm(t).toUpperCase(),n0=D.length;
+
+  if (!seenDebut) {
+      if (u === 'DEBUT') {
+          seenDebut = true;
+          return;
+      }
+      const cleanLine = t.replace(/^VARIABLES\s*:?\s*/i, '');
+      const varTokens = cleanLine.match(/[\p{L}_][\p{L}\p{N}_]*/gu) || [];
+      varTokens.forEach(v => ctx.vars.add(nrm(v).toLowerCase()));
+      return;
+  }
+
+  if((t.match(/"/g)||[]).length%2){add(L,'Guillemet manquant','Une chaîne de texte est ouverte avec " mais jamais fermée.','Ajoutez le guillemet fermant " à la fin de la chaîne.',end,'"');return}
+  const ns=t.replace(/"[^"]*"/g,''),o=(ns.match(/\(/g)||[]).length,c=(ns.match(/\)/g)||[]).length;
+  if(o>c){add(L,'Parenthèse manquante','Il y a '+(o-c)+' parenthèse(s) ouvrante(s) sans fermeture.','Ajoutez '+')'.repeat(o-c)+' à la fin de l’expression.',end,')'.repeat(o-c));return}
+  if(c>o){add(L,'Parenthèse en trop','Une parenthèse fermante ) n’a pas de parenthèse ouvrante.','Supprimez la parenthèse en trop ou ajoutez ( au bon endroit.');return}
+  const open=k=>st.push({k,l:L}),top=()=>st[st.length-1];
+  const close=(k,w)=>{const p=top();if(!p)add(L,'Fermeture sans ouverture',w+' n’a pas de bloc ouvert correspondant.','Supprimez cette ligne ou ajoutez le début du bloc.');else if(p.k!=k)add(L,'Blocs mal ordonnés',w+' arrive alors que le bloc ouvert ligne '+p.l+' attend '+CL[p.k]+'.','Fermez d’abord le bloc ouvert ligne '+p.l+' avec '+CL[p.k]+'.');else st.pop()};
+  if(/^SINON\s+SI\b/.test(u)||/^SI\b/.test(u)){
+   if(/^SI\b/.test(u))open('SI');if(!/\sALORS$/.test(u)){add(L,'Mot-clé manquant','La condition d’un SI doit être suivie de ALORS.','Ajoutez ALORS à la fin de la ligne.',end,' ALORS');return}
+   if(!/^SI\b/.test(u)&&(!top()||top().k!='SI'))add(L,'SINON SI sans SI','SINON SI doit se trouver dans un bloc SI.','Ajoutez un SI avant cette ligne.')}
+  else if(u=='SINON'){if(!top()||top().k!='SI')add(L,'SINON sans SI','SINON doit se trouver dans un bloc SI.','Ajoutez un SI … ALORS avant cette ligne.')}
+  else if(u=='FINSI')close('SI','FINSI');
+  else if(/^(TANTQUE|POUR)\b/.test(u)){open(u[0]=='T'?'W':'P');if(!/\sFAIRE$/.test(u)){add(L,'Mot-clé manquant','Cette ligne doit se terminer par FAIRE.','Ajoutez FAIRE à la fin de la ligne.',end,' FAIRE');return}}
+  else if(u=='FINTANTQUE')close('W','FINTANTQUE');
+  else if(u=='FINPOUR')close('P','FINPOUR');
+  else if(u=='REPETER')open('R');
+  else if(/^JUSQU['’]?A\b/.test(u))close('R','JUSQU’À');
+  if(D.length>n0)return;
+  for(const m of ns.matchAll(/([\p{L}_][\p{L}\p{N}_]*)\s*\(/gu)){const w=nrm(m[1]).toUpperCase();if(KW.has(w)||F[w]||known.has(w.toLowerCase()))continue;
+   add(L,'Module ou fonction inconnu','« '+m[1]+' » n’est ni une fonction prédéfinie ni un module de ce programme.','Vérifiez l’orthographe, ou créez un module nommé '+m[1]+' avec le bouton +.');return}
+  let s;try{s=compMod(name,t,ctx)}catch(e){
+      if(e.message.includes("instruction non comprise")){
+          const w=u.split(/\s+/)[0];
+          if(FORMS[w])add(L,'Instruction mal formée','Cette ligne ne respecte pas la forme de l’instruction '+DISP[w]+'.','Forme attendue : '+FORMS[w]);
+          else{const b=Object.keys(DISP).map(k=>[lev(w,k),k]).sort((x,y)=>x[0]-y[0])[0];
+           if(w.length>2&&b[0]<=2){const ws=code.search(/\S/),wl=t.split(/\s+/)[0].length;add(L,'Instruction inconnue','« '+t.split(/\s+/)[0]+' » n’est pas une instruction reconnue.','Vouliez-vous écrire '+DISP[b[1]]+' ?',ws+wl,' → '+DISP[b[1]]);D[D.length-1].rep=[ws,wl,DISP[b[1]]]}
+           else add(L,'Instruction inconnue','Cette ligne n’est ni une affectation, ni une instruction reconnue.','Pour donner une valeur : nom = valeur. Instructions : ÉCRIRE, LIRE, SI, TANTQUE, POUR, RÉPÉTER, ENTRER, RETOURNER.')}
+      } else {
+          add(L,'Erreur sémantique', e.message, 'Vérifiez que les variables sont correctement déclarées avant d’être utilisées.');
+      }
+      return;
+  }
+  s.slice(s.indexOf('\n')+1,s.lastIndexOf('\n};')).split('\n').forEach(f=>{const e=D.length==n0&&jsErr(f);if(e)add(L,'Expression invalide',jsMsg(e),'Vérifiez les opérateurs, les parenthèses et les guillemets de cette ligne.')});
+ });
+ if(st.length){const inn=st[st.length-1],r=[...st].reverse();
+  add(inn.l,'Bloc non fermé','Le bloc ouvert ligne '+inn.l+' n’est jamais fermé'+(st.length>1?' ('+st.length+' blocs ouverts)':'')+'.','Ajoutez à la fin : '+r.map(x=>CL[x.k]).join(', ')+'.',(lines[last-1]||'').replace(/\s+$/,'').length,r.map(x=>'\n'+CL[x.k]).join(''),last);D[D.length-1].eod=true}
+ return D}
+let DG=[],tm=0;
+const fmtHtml=d=>'ERREUR · Module '+esc(d.mod)+', <span class="error-line">ligne '+d.l+'</span> · '+esc(d.type)+'\n   '+esc(d.msg)+'\n   Solution : '+esc(d.fix)+(d.ins!==undefined&&d.mod==cur?'   [Tab = insérer la correction]':'');
+
+function lintAll(){
+    const k=knownMods();
+    return Object.keys(mods).flatMap(m=>lintMod(m,mods[m],k)).sort((a,b) => a.l - b.l);
+}
+const knownMods=()=>new Set(Object.keys(mods).map(k=>nrm(k).toLowerCase()));
+
+function live(){
+ DG=lintMod(cur,src.value,knownMods());
+ if(!running){$('msg').textContent='';$('msg').classList.remove('has-errors')}
+ hl()
+}
+function sched(){hl();clearTimeout(tm);tm=setTimeout(live,150)}
+function accept(){const ln=src.value.slice(0,src.selectionStart).split('\n').length;const d=DG.find(x=>x.ins!==undefined&&(x.eod?ln>=x.gl:(x.gl||x.l)==ln));if(!d)return false;
+ const ls=src.value.split('\n'),g=d.gl||d.l;let off=0;for(let i=0;i<g-1;i++)off+=ls[i].length+1;if(d.rep){src.setRangeText(d.rep[2],off+d.rep[0],off+d.rep[0]+d.rep[1],'end');return true}off+=Math.min(d.col,ls[g-1].length);src.setRangeText(d.ins,off,off,'end');return true}
+function fcr(){if($('fc').hidden)return;try{$('fc').innerHTML=flow(src.value)}catch(e){$('fc').textContent='Organigramme impossible : '+e.message}}
+const $=id=>document.getElementById(id);
+
+const DEF={
+  PRINCIPAL:'VARIABLES : \nDEBUT\n\n\\\\ This Website has been created by meow <3\n\\\\ IDA ENDK SHY REMARQUE WLA L9ITI SHY ERRORS 3WDHA LRASK HHHHH\n\nFIN',
+  Hanoi:'VARIABLES : \nDEBUT\n\n\\\\ Module auxiliaire récursif\nENTRER src, dest, temp, n\nSI n = 1 ALORS\n  ÉCRIRE "Déplacer anneau de ", src, " à ", dest, "\\n"\n  nb = 1\nSINON\n  nb = Hanoi(src, temp, dest, n - 1)\n  ÉCRIRE "Déplacer anneau de ", src, " à ", dest, "\\n"\n  nb = nb + 1\n  nb = nb + Hanoi(temp, dest, src, n - 1)\nFINSI\nRETOURNER nb\n\nFIN'
+};
+const MDL=[["ÉCRIRE (expressions)","ÉCRIRE \"\"\n"],["LIRE (variables)","LIRE x\n"],["SI … ALORS","SI  ALORS\n  \nFINSI\n"],["SI … SINON","SI  ALORS\n  \nSINON\n  \nFINSI\n"],["TANTQUE … FAIRE","TANTQUE  FAIRE\n  \nFINTANTQUE\n"],["POUR … FAIRE","POUR i DE 1 JUSQU’À 10 INCRÉMENT 1 FAIRE\n  \nFINPOUR\n"],["RÉPÉTER … JUSQU’À","RÉPÉTER\n  \nJUSQU’À \n"],["ENTRER (paramètres)","ENTRER a, b\n"],["RETOURNER (valeur)","RETOURNER \n"],["EXÉCUTER (module)","EXÉCUTER Module()\n"]];
+let mods=JSON.parse(JSON.stringify(DEF)),cur='PRINCIPAL',halt=false,rej=null;
+const src=$('src');
+
+// --- UNDO / REDO LOGIC ---
+let undoStack = [];
+let redoStack = [];
+let isUndoRedo = false;
+let historyTimer;
+
+function saveState() {
+    if (isUndoRedo) return;
+    const current = src.value;
+    if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== current) {
+        undoStack.push(current);
+        if (undoStack.length > 100) undoStack.shift();
+        redoStack = [];
+    }
+}
+
+src.addEventListener('input', () => {
+    clearTimeout(historyTimer);
+    historyTimer = setTimeout(saveState, 300);
+});
+
+// Initialize stack with current text
+setTimeout(saveState, 500);
+
+$('undo-btn').onclick = () => {
+    if (undoStack.length > 1) {
+        saveState(); // Save current before undo
+        redoStack.push(undoStack.pop());
+        const prev = undoStack[undoStack.length - 1];
+        isUndoRedo = true;
+        src.value = prev;
+        enforceBoundaries();
+        isUndoRedo = false;
+        gut();
+    }
+};
+
+$('redo-btn').onclick = () => {
+    if (redoStack.length > 0) {
+        saveState(); // Save current before redo
+        const next = redoStack.pop();
+        undoStack.push(next);
+        isUndoRedo = true;
+        src.value = next;
+        enforceBoundaries();
+        isUndoRedo = false;
+        gut();
+    }
+};
+
+// Expose menu commands to buttons
+const menuUndo = document.querySelector('[data-cmd="undo"]');
+const menuRedo = document.querySelector('[data-cmd="redo"]');
+if(menuUndo) menuUndo.onclick = () => $('undo-btn').click();
+if(menuRedo) menuRedo.onclick = () => $('redo-btn').click();
+
+// --- MAIN LOGIC ---
+
+function enforceBoundaries() {
+  let text = src.value;
+  let cursor = src.selectionStart;
+  let lines = text.split('\n');
+  let changed = false;
+
+  // 1. LINE 0: VARIABLES
+  let expectedVar = "VARIABLES : ";
+  let currentVar = lines[0] || "";
+  if (!currentVar.startsWith(expectedVar)) {
+      let content = currentVar.replace(/^VARIABLES\s*:?\s*/i, '');
+      lines[0] = expectedVar + content;
+      if (cursor < expectedVar.length) cursor = expectedVar.length;
+      changed = true;
+  }
+
+  // 2. DEBUT
+  let debutIdx = lines.findIndex((l, i) => i > 0 && l.trim() === "DEBUT");
+  if (debutIdx === -1) {
+      let mixedIdx = lines.findIndex((l, i) => i > 0 && l.includes("DEBUT"));
+      if (mixedIdx !== -1) {
+          let rest = lines[mixedIdx].replace("DEBUT", "").trim();
+          lines[mixedIdx] = "DEBUT";
+          if (rest) lines.splice(mixedIdx + 1, 0, rest);
+      } else {
+          let insertIdx = 1;
+          while(insertIdx < lines.length && lines[insertIdx].trim() === "") insertIdx++;
+          lines.splice(insertIdx, 0, "DEBUT");
+      }
+      changed = true;
+  }
+
+  // 3. FIN
+  let finIdx = lines.length - 1;
+  while(finIdx > 0 && lines[finIdx].trim() === "") finIdx--;
+  if (finIdx <= 0 || lines[finIdx].trim() !== "FIN") {
+      let mixedIdx = lines.findIndex((l, i) => i > 0 && l.includes("FIN"));
+      if (mixedIdx !== -1) {
+           let rest = lines[mixedIdx].replace("FIN", "").trim();
+           lines[mixedIdx] = "FIN";
+           if (rest) lines.splice(mixedIdx, 0, rest);
+      } else {
+          lines.push("FIN");
+      }
+      changed = true;
+  }
+
+  if (changed) {
+    src.value = lines.join('\n');
+    if (cursor < 12) cursor = 12;
+    if (cursor > src.value.length - 4) cursor = src.value.length - 4;
+    src.setSelectionRange(cursor, cursor);
+  }
+}
+
+function gut(){enforceBoundaries(); const n=src.value.split('\n').length;$('gut').textContent=Array.from({length:n},(_,i)=>i+1).join('\n');sched();fcr()}
+function pos(){const b=src.value.slice(0,src.selectionStart).split('\n');$('pos').textContent=b.length+':'+(b[b.length-1].length+1)}
+function nav(){$('nav').textContent='';for(const k in mods){const b=document.createElement('button');b.className='it mod'+(k==cur?' on':'');b.textContent=(k=='PRINCIPAL'?'Module principal : ':'Module : ')+k;b.onclick=()=>{mods[cur]=src.value;cur=k;src.value=mods[k];enforceBoundaries();$('cur').textContent=k;nav();gut()};$('nav').appendChild(b)}}
+MDL.forEach(([l,t])=>{const b=document.createElement('button');b.className='it';b.textContent=l;b.onclick=()=>{
+  src.focus();
+  let start = src.selectionStart;
+  let end = src.selectionEnd;
+  if (start < 12) start = 12;
+  if (end > src.value.length - 4) end = src.value.length - 4;
+  src.setRangeText(t,start,end,'end');
+  gut();pos()
+};$('mdl').appendChild(b)});
+
+$('na').onclick=()=>{const n=$('nn').value.trim();if(!/^[\p{L}_][\p{L}\p{N}_]*$/u.test(n)||mods[n]!==undefined)return;mods[cur]=src.value;mods[n]='VARIABLES : \nDEBUT\n\n\\\\ Module '+n+'\nENTRER a\nRETOURNER a\n\nFIN';cur=n;src.value=mods[n];enforceBoundaries();$('nn').value='';$('cur').textContent=n;nav();gut()};
+
+src.oninput=()=>{enforceBoundaries();gut()};
+src.onscroll=()=>{$('gut').scrollTop=src.scrollTop;$('hl').scrollTop=src.scrollTop;$('hl').scrollLeft=src.scrollLeft};['keyup','click'].forEach(e=>src.addEventListener(e,pos));
+
+src.onkeydown = e => {
+    // Built-in undo/redo shortcuts
+    if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        $('undo-btn').click();
+        return;
+    } else if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        $('redo-btn').click();
+        return;
+    }
+
+    const start = src.selectionStart;
+    const end = src.selectionEnd;
+    const lines = src.value.split('\n');
+    const lineIndexStart = src.value.slice(0, start).split('\n').length - 1;
+    const lineIndexEnd = src.value.slice(0, end).split('\n').length - 1;
+    
+    const isEditingKey = e.key.length === 1 || ['Backspace', 'Delete', 'Enter'].includes(e.key);
+    const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
+
+    if (isEditingKey && !hasModifier) {
+        const isDebutStart = lines[lineIndexStart] && lines[lineIndexStart].trim() === "DEBUT";
+        const isDebutEnd = lines[lineIndexEnd] && lines[lineIndexEnd].trim() === "DEBUT";
+        if (isDebutStart || isDebutEnd) { e.preventDefault(); return; }
+
+        const isFinStart = lines[lineIndexStart] && lines[lineIndexStart].trim() === "FIN";
+        const isFinEnd = lines[lineIndexEnd] && lines[lineIndexEnd].trim() === "FIN";
+        if (isFinStart || isFinEnd) { e.preventDefault(); return; }
+
+        if (lineIndexStart === 0 || lineIndexEnd === 0) {
+            const prefixLength = "VARIABLES : ".length;
+            if (start < prefixLength) { 
+                if (e.key === 'Backspace' && start === prefixLength) { e.preventDefault(); return; }
+                if (e.key.length === 1) { e.preventDefault(); return; }
+            }
+        }
+    }
+
+    if(e.key=='Tab'){
+        e.preventDefault();
+        if(!accept()) src.setRangeText('  ',src.selectionStart,src.selectionEnd,'end');
+        gut();
+    } else if(e.key=='Enter'&&e.ctrlKey){
+        e.preventDefault();
+        $('go').click();
+    }
+};
+
+$('stop').onclick=()=>{
+    halt=true;
+    if(nextStep)nextStep();
+    if(rej)rej(new Error('Exécution arrêtée'));
+    consoleModal.hidden = true;
+};
+
+$('dl').onclick=()=>{mods[cur]=src.value;const t=Object.entries(mods).map(([k,v])=>'### MODULE '+k+'\n'+v).join('\n\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download='algorithme.txt';a.click()};
+
+// Console Modal Logic
+const consoleModal = document.getElementById('console-modal');
+const consoleOut = document.getElementById('console-out');
+const consoleInp = document.getElementById('console-inp');
+const consolePrompt = document.getElementById('console-prompt');
+const consoleFooter = document.getElementById('console-footer');
+const consoleClose = document.getElementById('console-close');
+const consolePromptLabel = document.getElementById('console-prompt-label');
+const consoleBody = document.getElementById('console-body');
+let consoleFinished = false;
+
+function closeConsole() {
+  if (running && !consoleFinished) {
+    halt = true;
+    if (nextStep) nextStep();
+    if (rej) rej(new Error('Exécution arrêtée'));
+  }
+  consoleModal.hidden = true;
+}
+
+function openConsole() {
+  consoleOut.textContent = '';
+  consolePrompt.hidden = true;
+  consoleFooter.style.display = 'none';
+  consoleModal.hidden = false;
+  consoleFinished = false;
+}
+
+consoleClose.onclick = () => {
+    if (running && !consoleFinished) {
+        if(!confirm("Voulez-vous arrêter l'exécution ?")) return;
+        $('stop').click();
+    }
+    consoleModal.hidden = true;
+};
+
+// Draggable Console
+let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+const titlebar = consoleModal.querySelector('.console-titlebar');
+titlebar.addEventListener('mousedown', (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.classList.contains('console-resize-handle')) return;
+    isDragging = true;
+    const rect = consoleModal.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    consoleModal.style.transform = 'none';
+    consoleModal.style.left = rect.left + 'px';
+    consoleModal.style.top = rect.top + 'px';
+});
+document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    consoleModal.style.left = (e.clientX - dragOffsetX) + 'px';
+    consoleModal.style.top = (e.clientY - dragOffsetY) + 'px';
+});
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+// Console Resize Logic
+const resizeHandle = document.querySelector('.console-resize-handle');
+let isResizingConsole = false, startXCons, startYCons, startWCons, startHCons;
+
+resizeHandle.addEventListener('mousedown', (e) => {
+    isResizingConsole = true;
+    startXCons = e.clientX;
+    startYCons = e.clientY;
+    const rect = consoleModal.getBoundingClientRect();
+    startWCons = rect.width;
+    startHCons = rect.height;
+    // Ensure fixed positioning doesn't snap back
+    consoleModal.style.transform = 'none';
+    consoleModal.style.left = rect.left + 'px';
+    consoleModal.style.top = rect.top + 'px';
+    e.preventDefault();
+    e.stopPropagation();
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isResizingConsole) return;
+    const dw = e.clientX - startXCons;
+    const dh = e.clientY - startYCons;
+    consoleModal.style.width = Math.max(300, startWCons + dw) + 'px';
+    consoleModal.style.height = Math.max(200, startHCons + dh) + 'px';
+});
+
+document.addEventListener('mouseup', () => {
+    isResizingConsole = false;
+});
+
+async function runMain(){
+ mods[cur]=src.value; const o=$('out'), er=$('err'); o.textContent=''; er.textContent=''; halt=false; stepping=want; want=false; curL=0; running=true; let cnt=0;
+ 
+ openConsole();
+ 
+ // Reset position to center
+ consoleModal.style.transform = 'translate(-50%, -50%)';
+ consoleModal.style.left = '50%';
+ consoleModal.style.top = '50%';
+ // Reset size
+ consoleModal.style.width = '650px';
+ consoleModal.style.height = '450px';
+
+ try{
+  const dd=lintAll();
+  if(dd.length){
+    const firstErr = dd[0];
+    $('msg').innerHTML=fmtHtml(firstErr);
+    $('msg').classList.add('has-errors');
+    throw new Error('Exécution impossible : corrigez l\'erreur à la ligne ' + firstErr.l + '.');
+  }
+  $('msg').classList.remove('has-errors');
+  $('msg').textContent=Object.keys(mods).map(k=>'Compilation du module '+k+'...').join('\n')+'\nLiage du projet...\n';
+  const code=compileAll(mods);
+  $('msg').textContent+='COMPLÉTÉ - aucune erreur détectée.\n';
+  
+  const C=new Proxy({},{get:(t,k)=>t[k]||(()=>{throw new Error('Module inconnu : '+String(k))})});
+  const tick=()=>{if(halt)throw new Error('Exécution arrêtée');if(++cnt>3e6)throw new Error('Exécution trop longue : boucle infinie ?')};
+  
+  const lire = name => new Promise((res,rj) => {
+      rej = rj;
+      consoleBody.scrollTop = consoleBody.scrollHeight;
+      
+      consolePrompt.hidden = false;
+      consoleInp.value = '';
+      consoleInp.focus();
+      
+      const handleKey = (e) => {
+          if (e.key === 'Enter') {
+              e.preventDefault();
+              e.stopPropagation();
+              const v = consoleInp.value;
+              consoleInp.removeEventListener('keydown', handleKey);
+              consolePrompt.hidden = true;
+              consoleOut.textContent += v + '\n'; 
+              rej = null;
+              consoleBody.scrollTop = consoleBody.scrollHeight;
+              setTimeout(() => res(v.trim()!==''&&!isNaN(v)?Number(v):v), 10);
+          }
+      };
+      consoleInp.addEventListener('keydown', handleKey);
+  });
+
+  const ecrire = (...a) => {
+      consoleOut.textContent += a.map(x=>x===true?'VRAI':x===false?'FAUX':String(x).replace(/\\n/g,'\n')).join(' ') + '\n';
+      consoleBody.scrollTop = consoleBody.scrollHeight;
+  };
+
+  await new AF('C','F','ecrire','lire','tick','stp',code)(C,F,ecrire,lire,tick,stp);
+  
+  consoleOut.textContent += '\n— Exécution terminée —\n';
+  consoleFooter.style.display = 'block';
+  consoleFinished = true;
+ }catch(e){
+   $('msg').innerHTML+='\n\nERREUR détectée.\n';
+   $('msg').classList.add('has-errors');
+   er.textContent=e instanceof SyntaxError?'Erreur de syntaxe dans une expression : '+e.message:e.message;
+   
+   // Create a styled red error message in the console with the inline SVG image
+   const errSpan = document.createElement('span');
+   errSpan.style.color = '#ff4444';
+   errSpan.style.fontWeight = 'bold';
+   errSpan.textContent = 'ERREUR : ' + er.textContent + ' ';
+   
+   const xImg = document.createElement('img');
+   // INLINE SVG: Red brush-style cross
+   xImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23ff2a2a'><path d='M20 10 Q30 20 40 35 L70 10 Q80 15 75 25 L50 50 L80 80 Q75 90 65 85 L40 60 L15 85 Q5 80 10 70 L35 45 L10 20 Q15 10 20 10 Z'/></svg>";
+   xImg.style.height = '16px';
+   xImg.style.verticalAlign = 'middle';
+   errSpan.appendChild(xImg);
+   
+   consoleOut.appendChild(document.createElement('br'));
+   consoleOut.appendChild(errSpan);
+   consoleOut.appendChild(document.createElement('br'));
+
+   consoleFooter.style.display = 'block';
+   consoleFinished = true;
+ }
+ running=false; stepping=false; nextStep=null; curL=0; hl();
+}
+
+$('go').onclick=async()=>{if(runP){halt=true;if(nextStep)nextStep();if(rej)rej(new Error('Exécution arrêtée'));try{await runP}catch(e){}}runP=runMain();try{await runP}finally{runP=null}};
+
+// MENU LOGIC
+document.querySelectorAll('.menu-item').forEach(m => {
+  m.onclick = (e) => {
+    e.stopPropagation();
+    const wasOpen = m.classList.contains('open');
+    document.querySelectorAll('.menu-item').forEach(x => x.classList.remove('open'));
+    if (!wasOpen) m.classList.add('open');
+  };
+});
+document.addEventListener('click', () => {
+  document.querySelectorAll('.menu-item').forEach(x => x.classList.remove('open'));
+});
+document.querySelectorAll('.dropdown span').forEach(s => {
+  s.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.menu-item').forEach(x => x.classList.remove('open'));
+    
+    const a = s.dataset.a;
+    const cmd = s.dataset.cmd;
+
+    if (a === 'go') $('go').click();
+    else if (a === 'dl') $('dl').click();
+    else if (a === 'stop') $('stop').click();
+    else if (a === 'sb') $('sb').click();
+    else if (a === 'nx') $('nx').click();
+    else if (a === 'fb') $('fb').click();
+    else if (a === 'new' || a === 'close' || a === 'newproj') {
+        if(confirm('Voulez-vous vraiment réinitialiser le projet ? Les modifications non sauvegardées seront perdues.')) {
+            mods = JSON.parse(JSON.stringify(DEF)); cur = 'PRINCIPAL'; src.value = mods[cur]; nav(); gut();
+        }
+    }
+    else if (a === 'quit') {
+        alert("Pour quitter meow-larp, veuillez fermer cet onglet dans votre navigateur.");
+    }
+    else if (cmd === 'about') {
+        alert("meow-larp 3.00\n\nLogiciel d'Algorithmes et de Résolution de Problèmes\nType: Partagiciel\nPrix: 14.99 $ USD\n\nAuteur: Marco Lavoie\nUrl: http://www.marcolavoie.ca\n\nCopyright © 2004-2006 Marco Lavoie");
+    }
+    else if (cmd === 'colors' || cmd === 'general') {
+        $('bgc').click();
+    }
+    else if (cmd === 'compile') {
+        const dd = lintAll();
+        if(dd.length) {
+            $('msg').innerHTML = dd.map(fmtHtml).join('\n');
+            $('msg').classList.add('has-errors');
+        } else {
+            $('msg').classList.remove('has-errors');
+            $('msg').textContent = "COMPILATION RÉUSSIE - aucune erreur détectée.";
+        }
+    }
+    else if (cmd === 'cut') { src.focus(); document.execCommand('cut'); }
+    else if (cmd === 'copy') { src.focus(); document.execCommand('copy'); }
+    else if (cmd === 'paste') navigator.clipboard.readText().then(t => { src.focus(); src.setRangeText(t, src.selectionStart, src.selectionEnd, 'end'); gut(); }).catch(e=>alert('Accès au presse-papiers refusé.'));
+    else if (cmd === 'selectall') src.select();
+    else if (cmd === 'clearall') {
+        if(confirm('Effacer tout le contenu de ce module ?')) { src.value = 'VARIABLES : \nDEBUT\n\n\nFIN'; gut(); }
+    }
+    else if (cmd === 'find') {
+        const term = prompt('Rechercher :');
+        if(term) {
+            const pos = src.value.indexOf(term);
+            if(pos !== -1) { src.focus(); src.setSelectionRange(pos, pos + term.length); }
+            else alert('Texte introuvable.');
+        }
+    }
+    else if (cmd === 'addmod') {
+        $('nn').focus();
+    }
+    else {
+        $('msg').textContent = '« ' + s.textContent.split('\n')[0] + ' » : fonction non disponible dans cette version web.\n';
+    }
+  };
+});
+
+// Hotkey Config
+let customHotkey = localStorage.getItem('algoHotkey') || 'F5';
+const hotkeyBtn = document.getElementById('hotkey-btn');
+let isCapturingHotkey = false;
+
+function updateHotkeyDisplay() {
+    hotkeyBtn.textContent = `⌨ ${customHotkey}`;
+}
+updateHotkeyDisplay();
+
+hotkeyBtn.onclick = () => {
+    isCapturingHotkey = true;
+    hotkeyBtn.textContent = "Appuyez...";
+    hotkeyBtn.style.background = "var(--ac)";
+    hotkeyBtn.style.color = "var(--on)";
+};
+
+window.addEventListener('keydown', (e) => {
+    if (isCapturingHotkey) {
+        e.preventDefault();
+        e.stopPropagation();
+        let key = e.key;
+        if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+        if (e.ctrlKey) key = 'Ctrl+' + key;
+        if (e.altKey) key = 'Alt+' + key;
+        if (e.shiftKey) key = 'Shift+' + key;
+        if (e.key === 'Escape') {
+            isCapturingHotkey = false;
+            hotkeyBtn.style.background = "";
+            hotkeyBtn.style.color = "";
+            updateHotkeyDisplay();
+            return;
+        }
+        customHotkey = key;
+        localStorage.setItem('algoHotkey', customHotkey);
+        isCapturingHotkey = false;
+        hotkeyBtn.style.background = "";
+        hotkeyBtn.style.color = "";
+        updateHotkeyDisplay();
+        return;
+    }
+
+    let pressed = e.key;
+    if (e.ctrlKey) pressed = 'Ctrl+' + pressed;
+    if (e.altKey) pressed = 'Alt+' + pressed;
+    if (e.shiftKey) pressed = 'Shift+' + pressed;
+    
+    if (pressed === customHotkey) {
+        e.preventDefault();
+        if (!runP) $('go').click();
+    }
+
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); $('dl').click(); }
+    if (e.ctrlKey && e.key === 'n') { e.preventDefault(); document.querySelector('[data-a="new"]').click(); }
+    if (e.ctrlKey && e.key === 'p') { e.preventDefault(); alert("L'impression n'est pas supportée par le navigateur. Utilisez Sauvegarder."); }
+    
+    if (!consoleModal.hidden && consoleFinished && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        if (['Shift','Control','Alt','Meta'].includes(e.key)) return;
+        e.preventDefault();
+        closeConsole();
+    }
+});
+
+// Draggable Resizer Logic (Main Bottom Panel)
+const resizer = document.getElementById('drag-resizer');
+const botPanel = document.querySelector('.bot');
+let isResizing = false, startY, startHeight;
+
+resizer.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    startY = e.clientY;
+    startHeight = parseInt(document.defaultView.getComputedStyle(botPanel).height, 10);
+    document.body.style.cursor = 'row-resize';
+    resizer.classList.add('active');
+    e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    const dy = startY - e.clientY;
+    const newHeight = startHeight + dy;
+    if (newHeight > 100 && newHeight < window.innerHeight - 200) {
+        botPanel.style.height = newHeight + 'px';
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        resizer.classList.remove('active');
+    }
+});
+
+// Draggable Resizer Logic (Inner Panels)
+document.querySelectorAll('.resizer-h').forEach(innerResizer => {
+    let isResizingInner = false, startYInner, startHeightInner, targetEl;
+
+    innerResizer.addEventListener('mousedown', (e) => {
+        isResizingInner = true;
+        startYInner = e.clientY;
+        targetEl = document.getElementById(innerResizer.dataset.target);
+        startHeightInner = targetEl.getBoundingClientRect().height;
+        
+        document.body.style.cursor = 'row-resize';
+        innerResizer.classList.add('active');
+        e.preventDefault();
+        e.stopPropagation(); // Prevent triggering outer resizer
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizingInner) return;
+        const dy = e.clientY - startYInner;
+        const newHeight = startHeightInner + dy;
+        if (newHeight > 25) { // Minimum height
+            targetEl.style.flex = 'none';
+            targetEl.style.height = newHeight + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizingInner) {
+            isResizingInner = false;
+            document.body.style.cursor = '';
+            innerResizer.classList.remove('active');
+        }
+    });
+});
+
+// --- BACKGROUND IMAGE & THEME LOGIC ---
+const imgBtn = document.getElementById('img-btn');
+const bgFile = document.getElementById('bg-file');
+const appEl = document.getElementById('app');
+
+function adjustColor(hex, percent) {
+    if(!hex.startsWith('#')) return hex;
+    let R = parseInt(hex.substring(1,3), 16);
+    let G = parseInt(hex.substring(3,5), 16);
+    let B = parseInt(hex.substring(5,7), 16);
+    R = parseInt(R * (100 + percent) / 100);
+    G = parseInt(G * (100 + percent) / 100);
+    B = parseInt(B * (100 + percent) / 100);
+    R = (R<255)?R:255; R = (R<0)?0:R;
+    G = (G<255)?G:255; G = (G<0)?0:G;
+    B = (B<255)?B:255; B = (B<0)?0:B;
+    let rHex = R.toString(16); rHex = (rHex.length==1)?"0"+rHex:rHex;
+    let gHex = G.toString(16); gHex = (gHex.length==1)?"0"+gHex:gHex;
+    let bHex = B.toString(16); bHex = (bHex.length==1)?"0"+bHex:bHex;
+    return "#"+rHex+gHex+bHex;
+}
+
+imgBtn.onclick = () => bgFile.click();
+
+bgFile.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        appEl.style.backgroundImage = `url(${dataUrl})`;
+        appEl.style.backgroundSize = 'cover';
+        appEl.style.backgroundPosition = 'center';
+        appEl.style.backgroundRepeat = 'no-repeat';
+        
+        // Disable the color picker
+        $('bgc').disabled = true;
+
+        // Make the background color semi-transparent so text is readable over the image
+        const currentColor = $('bgc').value;
+        const r = parseInt(currentColor.slice(1, 3), 16);
+        const g = parseInt(currentColor.slice(3, 5), 16);
+        const b = parseInt(currentColor.slice(5, 7), 16);
+        appEl.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+
+        try { localStorage.setItem('algoBgImg', dataUrl); } catch(e) { alert("L'image est trop lourde pour être sauvegardée en local."); }
+    };
+    reader.readAsDataURL(file);
+};
+
+function setBg(c) {
+    const root = document.documentElement;
+    const vars = ['--bg','--card','--ed','--fg','--kw','--str','--cm','--mut','--bd','--sel','--resizer-bg'];
+    vars.forEach(k => root.style.removeProperty(k));
+    
+    if (!c) {
+        // Reset clears both color and image
+        appEl.style.backgroundImage = 'none';
+        appEl.style.backgroundColor = 'var(--bg)';
+        $('bgc').disabled = false;
+        try { localStorage.removeItem('algoBgImg'); } catch(e) {}
+        return;
+    }
+    
+    const n = parseInt(c.slice(1), 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const isDark = (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+    
+    root.style.setProperty('--bg', c);
+    root.style.setProperty('--ed', c);
+    
+    // Adjust card, border, and selection colors based on the main color
+    root.style.setProperty('--card', adjustColor(c, isDark ? +10 : -10));
+    root.style.setProperty('--bd', adjustColor(c, isDark ? +20 : -20));
+    root.style.setProperty('--sel', adjustColor(c, isDark ? +30 : -30));
+
+    // Dynamically adapt resizer color for high visibility
+    const resizerColor = isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.25)';
+    root.style.setProperty('--resizer-bg', resizerColor);
+    
+    root.style.setProperty('--fg', isDark ? '#e6e8ee' : '#1f2430');
+    root.style.setProperty('--mut', isDark ? '#9aa3b2' : '#6b7280');
+    root.style.setProperty('--kw', isDark ? '#a5b4fc' : '#4338ca');
+    root.style.setProperty('--str', isDark ? '#fbbf24' : '#b45309');
+    root.style.setProperty('--cm', isDark ? '#9aa3b2' : '#6b7280');
+
+    // If an image is present, apply the color as a semi-transparent overlay
+    if (appEl.style.backgroundImage !== 'none' && appEl.style.backgroundImage !== '') {
+        appEl.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+    } else {
+        appEl.style.backgroundColor = c;
+    }
+}
+
+$('bgc').oninput=()=>{setBg($('bgc').value);try{localStorage.setItem('algoBg',$('bgc').value)}catch(e){}};
+$('bgr').onclick=()=>{setBg(null);try{localStorage.removeItem('algoBg')}catch(e){}};
+
+// Restore image on load if it exists
+try{
+    const c=localStorage.getItem('algoBg');
+    if(c){$('bgc').value=c;setBg(c)}
+    
+    const img = localStorage.getItem('algoBgImg');
+    if (img) {
+        appEl.style.backgroundImage = `url(${img})`;
+        appEl.style.backgroundSize = 'cover';
+        appEl.style.backgroundPosition = 'center';
+        appEl.style.backgroundRepeat = 'no-repeat';
+        $('bgc').disabled = true; // Disable color picker on load if image exists
+        
+        // Re-apply transparent overlay
+        if(c) {
+            const n = parseInt(c.slice(1), 16);
+            const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+            appEl.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+        }
+    } else {
+        $('bgc').disabled = false; // Ensure it's enabled if no image
+    }
+}catch(e){}
+
+$('sb').onclick=()=>{want=true;$('go').click()};
+$('nx').onclick=()=>{if(nextStep){const r=nextStep;nextStep=null;r()}};
+$('fb').onclick=()=>{$('fc').hidden=!$('fc').hidden;fcr()};
+src.value=mods.PRINCIPAL;nav();gut();pos();
+</script></body></html>
